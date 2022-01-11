@@ -1,6 +1,14 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const ejs = require("ejs");
+const Photo = require("./models/Photo");
+
 const app = express();
+
+mongoose.connect("mongodb://localhost/pcat", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 // MIDLEWARES
 app.use(express.static("public"));
@@ -13,8 +21,11 @@ const port = 5000;
 app.set("view engine", "ejs");
 
 //ROUTES
-app.get("/", (req, res) => {
-  res.render("index");
+app.get("/", async (req, res) => {
+  const photos = await Photo.find({});
+  res.render("index", {
+    photos,
+  });
 });
 
 app.get("/about", (req, res) => {
@@ -25,9 +36,10 @@ app.get("/add", (req, res) => {
   res.render("add");
 });
 
-app.post("/photos", (req, res) => {
-  console.log(req.body);
-  res.redirect("/ ");
+app.post("/photos", async (req, res) => {
+  // async - await yapısı kullanacğız.
+  await Photo.create(req.body); // body bilgisini Photo modeli sayesinde veritabanında dökümana dönüştürüyoruz.
+  res.redirect("/");
 });
 
 app.listen(port, () => {
