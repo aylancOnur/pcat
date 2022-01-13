@@ -11,6 +11,7 @@ const app = express();
 mongoose.connect("mongodb://localhost/pcat", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  // useFindAndModify: false
 });
 
 // MIDLEWARES
@@ -18,7 +19,11 @@ app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true })); // url deki datayı okumamızı sağlıyor.
 app.use(express.json()); // datayı json a çevirmek için
 app.use(fileUpload());
-app.use(methodOverride("_method"));
+app.use(
+  methodOverride("_method", {
+    methods: ["POST", "GET"],
+  })
+);
 
 const port = 5000;
 
@@ -78,6 +83,14 @@ app.put("/photos/:id", async (req, res) => {
   photo.save();
 
   res.redirect(`/photos/${req.params.id}`);
+});
+
+app.delete("/photos/:id", async (req, res) => {
+  const photo = await Photo.findOne({ _id: req.params.id });
+  let deletedImage = __dirname + "/public" + photo.image;
+  fs.unlinkSync(deletedImage);
+  await Photo.findByIdAndRemove(req.params.id);
+  res.redirect("/");
 });
 
 app.listen(port, () => {
