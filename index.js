@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const ejs = require("ejs");
 const fileUpload = require("express-fileupload");
 const fs = require("fs");
+const methodOverride = require("method-override");
 const Photo = require("./models/Photo");
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true })); // url deki datayı okumamızı sağlıyor.
 app.use(express.json()); // datayı json a çevirmek için
 app.use(fileUpload());
+app.use(methodOverride("_method"));
 
 const port = 5000;
 
@@ -25,7 +27,7 @@ app.set("view engine", "ejs");
 
 //ROUTES
 app.get("/", async (req, res) => {
-  const photos = await Photo.find({}).sort('-dateCreated');
+  const photos = await Photo.find({}).sort("-dateCreated");
   res.render("index", {
     photos,
   });
@@ -61,6 +63,21 @@ app.post("/photos", async (req, res) => {
     }); // body bilgisini Photo modeli sayesinde veritabanında dökümana dönüştürüyoruz.
     res.redirect("/");
   });
+});
+
+app.get("/photos/edit/:id", async (req, res) => {
+  const photo = await Photo.findOne({ _id: req.params.id });
+  res.render("edit", { photo });
+});
+
+app.put("/photos/:id", async (req, res) => {
+  const photo = await Photo.findOne({ _id: req.params.id });
+  const { title, description, id } = req.body;
+  photo.title = title;
+  photo.description = description;
+  photo.save();
+
+  res.redirect(`/photos/${req.params.id}`);
 });
 
 app.listen(port, () => {
